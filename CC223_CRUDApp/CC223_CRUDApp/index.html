@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase CRUD</title>
+</head>
+<body>
+    <h2>Firebase CRUD App</h2>
+
+    <input type="text" id="name" placeholder="Enter Name">
+    <input type="email" id="email" placeholder="Enter Email">
+    <button onclick="addUser()">Add User</button>
+
+    <h3>Users:</h3>
+    <ul id="userList"></ul>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from 
+        "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyDr2dOgE9Yoxgn70J_z4xnzLS7rvR7xW-g",
+            authDomain: "mycrudappfeatkyleandgino.firebaseapp.com",
+            projectId: "mycrudappfeatkyleandgino",
+            storageBucket: "mycrudappfeatkyleandgino.firebasestorage.app",
+            messagingSenderId: "340108995659",
+            appId: "1:340108995659:web:db93f5b14d4c34fc48b1ce",
+            measurementId: "G-CN85M6ND9J"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function addUser() { 
+            const name = document.getElementById("name").value; 
+            const email = document.getElementById("email").value; 
+
+            if (name === "" || email === "") {
+                alert("Please fill in all fields.");
+                return;
+            }
+
+            await addDoc(collection(db, "users"), { name, email }); 
+            alert("User added!"); 
+            fetchUsers(); 
+        } 
+
+        async function fetchUsers() { 
+            const querySnapshot = await getDocs(collection(db, "users")); 
+            const userList = document.getElementById("userList"); 
+            userList.innerHTML = ""; 
+
+            querySnapshot.forEach((doc) => { 
+                const li = document.createElement("li"); 
+                li.innerHTML = `${doc.data().name} (${doc.data().email})  
+                <button onclick="updateUser('${doc.id}')">Update</button>  
+                <button onclick="deleteUser('${doc.id}')">Delete</button>`; 
+                userList.appendChild(li); 
+            }); 
+        } 
+
+        async function updateUser(userId) { 
+            const newName = prompt("Enter new name:"); 
+            if (newName) { 
+                await updateDoc(doc(db, "users", userId), { name: newName }); 
+                alert("User updated!"); 
+                fetchUsers(); 
+            } 
+        } 
+
+        async function deleteUser(userId) { 
+            await deleteDoc(doc(db, "users", userId)); 
+            alert("User deleted!"); 
+            fetchUsers(); 
+        } 
+        
+        fetchUsers();
+    </script>
+</body>
+</html>

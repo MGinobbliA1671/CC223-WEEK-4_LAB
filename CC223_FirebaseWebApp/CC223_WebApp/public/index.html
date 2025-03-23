@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Auth & Firestore</title>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js"></script>
+</head>
+<body>
+    <h2>Sign Up</h2>
+    <input type="text" id="signup-name" placeholder="Enter name">
+    <input type="email" id="signup-email" placeholder="Enter email">
+    <input type="password" id="signup-password" placeholder="Enter password">
+    <button id="signup-btn">Sign Up</button>
+
+    <h2>Login</h2>
+    <input type="email" id="login-email" placeholder="Enter email">
+    <input type="password" id="login-password" placeholder="Enter password">
+    <button id="login-btn">Login</button>
+    <button id="logout-btn">Logout</button>
+
+    <h2>Retrieve Users from Firestore</h2>
+    <button id="fetch-users-btn">Fetch Users</button>
+    <p id="user-list"></p>
+
+    <p id="message"></p>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1g-zqMSUrFgRoUEQSe0ou-EwIdy-kp6I",
+            authDomain: "mywebapp-feat-kyle-and-gino.firebaseapp.com",
+            projectId: "mywebapp-feat-kyle-and-gino",
+            storageBucket: "mywebapp-feat-kyle-and-gino.appspot.com",
+            messagingSenderId: "54351805413",
+            appId: "1:54351805413:web:889859ad0a2e2b7cbf8d0c",
+            measurementId: "G-4NZGTQHM15"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        document.getElementById("signup-btn").addEventListener("click", async function() {
+            const email = document.getElementById("signup-email").value;
+            const password = document.getElementById("signup-password").value;
+            const name = document.getElementById("signup-name").value;
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                await setDoc(doc(db, "users", user.uid), {
+                    name: name,
+                    email: email
+                });
+
+                document.getElementById("message").innerText = "Signup successful! User added to Firestore.";
+            } catch (error) {
+                document.getElementById("message").innerText = "Error: " + error.message;
+            }
+        });
+
+        document.getElementById("login-btn").addEventListener("click", async function() {
+            const email = document.getElementById("login-email").value;
+            const password = document.getElementById("login-password").value;
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                document.getElementById("message").innerText = "Login successful!";
+            } catch (error) {
+                document.getElementById("message").innerText = "Error: " + error.message;
+            }
+        });
+
+        document.getElementById("logout-btn").addEventListener("click", async function() {
+            try {
+                await signOut(auth);
+                document.getElementById("message").innerText = "Logout successful!";
+            } catch (error) {
+                document.getElementById("message").innerText = "Error: " + error.message;
+            }
+        });
+
+        document.getElementById("fetch-users-btn").addEventListener("click", async function() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "users"));
+                let usersList = "Users:<br>";
+
+                querySnapshot.forEach((doc) => {
+                    usersList += `🟢 ${doc.data().name} (${doc.data().email})<br>`;
+                });
+
+                document.getElementById("user-list").innerHTML = usersList;
+            } catch (error) {
+                document.getElementById("user-list").innerText = "Error fetching users: " + error.message;
+            }
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log("User is logged in:", user.email);
+            } else {
+                console.log("No user is logged in.");
+            }
+        });
+    </script>
+</body>
+</html>
